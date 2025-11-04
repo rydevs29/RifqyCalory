@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RifqyKalori</title>
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"RifqyKalori\",\"short_name\":\"Kalori\",\"start_url\":\"index.html\",\"display\":\"standalone\",\"background_color\":\"#0f0c29\",\"theme_color\":\"#6c5ce7\",\"icons\":[{\"src\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\"sizes\":\"192x192\"}]}">
+  <meta name="theme-color" content="#6c5ce7">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.1); --text: #ffffff; --radius: 28px; --shadow: 0 20px 40px rgba(0,0,0,0.3); --gap: 16px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+    .container { max-width: 900px; margin: 0 auto; padding: var(--gap); }
+    .header { text-align: center; margin-bottom: 32px; }
+    h1 { font-size: clamp(32px, 6vw, 48px); background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { font-size: clamp(16px, 4vw, 18px); opacity: 0.9; }
+    .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .nav-card { backdrop-filter: blur(16px); background: var(--glass); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius); padding: 32px; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.3s; }
+    .nav-card:hover { transform: translateY(-8px); }
+    .nav-card h3 { font-size: 20px; margin-bottom: 8px; }
+    .nav-card p { font-size: 14px; opacity: 0.8; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.2); display: flex; padding: 10px 12px; z-index: 1000; }
+    .nav-item { flex: 1; text-align: center; padding: 12px 6px; font-size: 14px; font-weight: 600; border-radius: 18px; margin: 0 6px; transition: all 0.3s; cursor: pointer; }
+    .nav-item.active { background: var(--secondary); color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>RifqyKalori</h1>
+      <p class="subtitle">Scan Makanan & Minuman → Kalori Otomatis!</p>
+    </div>
+
+    <div class="nav-grid">
+      <a href="makanan.html" class="nav-card">
+        <h3>Makanan</h3>
+        <p>200+ Item Indonesia</p>
+      </a>
+      <a href="minuman.html" class="nav-card">
+        <h3>Minuman</h3>
+        <p>80+ Item Populer</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active">Home</div>
+    <div class="nav-item" onclick="alert('RifqyKalori v5.0\nNo Upload, No DB.js\nDibuat oleh Rifqy © 2025')">About</div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:text/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("fetch",e=>e.respondWith(fetch(e.request)));');
+    }
+  </script>
+</body>
+  </html>
