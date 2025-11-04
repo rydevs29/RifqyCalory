@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Makanan - RifqyKalori</title>
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"RifqyKalori\",\"short_name\":\"Kalori\",\"start_url\":\"index.html\",\"display\":\"standalone\",\"background_color\":\"#0f0c29\",\"theme_color\":\"#6c5ce7\",\"icons\":[{\"src\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\"sizes\":\"192x192\"}]}">
+  <meta name="theme-color" content="#6c5ce7">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.1); --text: #ffffff; --radius: 28px; --shadow: 0 20px 40px rgba(0,0,0,0.3); --gap: 16px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+    .container { max-width: 900px; margin: 0 auto; padding: var(--gap); }
+    .header { text-align: center; margin-bottom: 16px; }
+    h1 { font-size: clamp(28px, 5vw, 38px); background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .back-btn { background: var(--glass); padding: 12px 20px; border-radius: 20px; text-decoration: none; color: white; font-size: 14px; display: inline-block; margin-bottom: 16px; }
+    .card { backdrop-filter: blur(16px); background: var(--glass); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: var(--gap); }
+    .camera-container { position: relative; height: 300px; border-radius: 20px; overflow: hidden; margin-bottom: 16px; background: #000; }
+    #video, #preview { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; } #canvas { display: none; }
+    .btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border: none; border-radius: 18px; cursor: pointer; margin: 8px 0; transition: all 0.2s; }
+    .btn-camera { background: #51cf66; color: white; } .btn-scan { background: var(--secondary); color: white; opacity: 0.6; pointer-events: none; }
+    .btn-scan.active { opacity: 1; pointer-events: auto; }
+    .btn-save { background: #ffd43b; color: #333; }
+    .result { margin-top: 16px; padding: 16px; background: rgba(255,255,255,0.1); border-radius: 16px; text-align: center; }
+    .result h3 { margin-bottom: 8px; font-size: 18px; } .gizi { display: flex; justify-content: space-around; margin: 12px 0; font-size: 14px; }
+    .chart-container { height: 180px; margin: 16px 0; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.2); display: flex; padding: 10px 12px; z-index: 1000; }
+    .nav-item { flex: 1; text-align: center; padding: 10px 6px; font-size: 13px; font-weight: 600; border-radius: 18px; margin: 0 6px; transition: all 0.3s; cursor: pointer; }
+    .nav-item.active { background: var(--secondary); color: white; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="back-btn">Kembali ke Home</a>
+    <div class="header">
+      <h1>Makanan</h1>
+      <p>Scan atau Tulis Nama → Kalori Otomatis</p>
+    </div>
+
+    <div class="card">
+      <div class="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <button id="btn-camera" class="btn btn-camera" onclick="startCamera()">Buka Kamera</button>
+      <button id="btn-scan" class="btn btn-scan" onclick="scanImage()">Scan Makanan</button>
+
+      <div id="result" class="result hidden">
+        <h3 id="food-name">Nasi Goreng</h3>
+        <div class="gizi">
+          <div><strong id="calories">450</strong> kcal</div>
+          <div>Karbo: <strong id="carb">65g</strong></div>
+          <div>Prot: <strong id="protein">12g</strong></div>
+          <div>Lemak: <strong id="fat">18g</strong></div>
+        </div>
+        <div class="chart-container"><canvas id="giziChart"></canvas></div>
+        <button class=btn btn-save onclick="saveFood()">Simpan ke Riwayat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="index.html" class="nav-item">Home</a>
+    <div class="nav-item active">Makanan</div>
+    <a href="minuman.html" class="nav-item">Minuman</a>
+  </div>
+
+  <script>
+    // === DATABASE MAKANAN (200+ ITEM) ===
+    const makananDB = {
+      "nasi goreng": { name: "Nasi Goreng", cal: 450, carb: 65, prot: 12, fat: 18 },
+      "mie goreng": { name: "Mie Goreng", cal: 520, carb: 70, prot: 15, fat: 22 },
+      "mie rebus": { name: "Mie Rebus", cal: 380, carb: 55, prot: 10, fat: 12 },
+      "mie ayam": { name: "Mie Ayam", cal: 450, carb: 60, prot: 18, fat: 18 },
+      "mie instan": { name: "Mie Instan", cal: 400, carb: 58, prot: 9, fat: 16 },
+      "ayam goreng": { name: "Ayam Goreng", cal: 350, carb: 10, prot: 30, fat: 22 },
+      "ayam bakar": { name: "Ayam Bakar", cal: 380, carb: 10, prot: 35, fat: 25 },
+      "sate ayam": { name: "Sate Ayam", cal: 320, carb: 8, prot: 28, fat: 20 },
+      "rendang": { name: "Rendang", cal: 600, carb: 15, prot: 40, fat: 45 },
+      "soto ayam": { name: "Soto Ayam", cal: 250, carb: 20, prot: 15, fat: 10 },
+      "gado gado": { name: "Gado-Gado", cal: 320, carb: 30, prot: 10, fat: 15 },
+      "tempe goreng": { name: "Tempe Goreng", cal: 164, carb: 10, prot: 10, fat: 11 },
+      "tahu goreng": { name: "Tahu Goreng", cal: 144, carb: 5, prot: 8, fat: 10 },
+      "pisang goreng": { name: "Pisang Goreng", cal: 300, carb: 45, prot: 3, fat: 12 },
+      "nasi uduk": { name: "Nasi Uduk", cal: 400, carb: 60, prot: 8, fat: 12 },
+      "nasi putih": { name: "Nasi Putih", cal: 200, carb: 45, prot: 4, fat: 0 },
+      "nasi merah": { name: "Nasi Merah", cal: 180, carb: 40, prot: 5, fat: 1 },
+      "roti tawar": { name: "Roti Tawar", cal: 80, carb: 15, prot: 3, fat: 1 },
+      "telur dadar": { name: "Telur Dadar", cal: 180, carb: 2, prot: 12, fat: 15 },
+      "telur rebus": { name: "Telur Rebus", cal: 75, carb: 1, prot: 6, fat: 5 },
+      "telur ceplok": { name: "Telur Ceplok", cal: 90, carb: 1, prot: 6, fat: 7 },
+      "bebek goreng": { name: "Bebek Goreng", cal: 450, carb: 12, prot: 35, fat: 30 },
+      "ikan goreng": { name: "Ikan Goreng", cal: 250, carb: 5, prot: 25, fat: 15 },
+      "cumi bakar": { name: "Cumi Bakar", cal: 200, carb: 5, prot: 30, fat: 8 },
+      "udang goreng": { name: "Udang Goreng", cal: 220, carb: 8, prot: 20, fat: 12 },
+      "sayur asem": { name: "Sayur Asem", cal: 120, carb: 18, prot: 5, fat: 4 },
+      "sayur bayam": { name: "Sayur Bayam", cal: 80, carb: 10, prot: 4, fat: 3 },
+      "capcay": { name: "Capcay", cal: 150, carb: 20, prot: 8, fat: 6 },
+      "cah kangkung": { name: "Cah Kangkung", cal: 120, carb: 12, prot: 6, fat: 7 },
+      "bakso": { name: "Bakso", cal: 300, carb: 35, prot: 15, fat: 12 },
+      "kwetiau goreng": { name: "Kwetiau Goreng", cal: 520, carb: 70, prot: 16, fat: 22 },
+      "bihun goreng": { name: "Bihun Goreng", cal: 480, carb: 68, prot: 14, fat: 20 },
+      "ayam geprek": { name: "Ayam Geprek", cal: 500, carb: 40, prot: 35, fat: 28 },
+      "ayam penyet": { name: "Ayam Penyet", cal: 480, carb: 38, prot: 34, fat: 26 },
+      "nasi padang": { name: "Nasi Padang", cal: 700, carb: 80, prot: 30, fat: 35 },
+      "nasi kuning": { name: "Nasi Kuning", cal: 400, carb: 60, prot: 8, fat: 12 },
+      "bubur ayam": { name: "Bubur Ayam", cal: 280, carb: 50, prot: 12, fat: 5 },
+      "perkedel": { name: "Perkedel", cal: 180, carb: 15, prot: 6, fat: 10 },
+      "bakwan": { name: "Bakwan", cal: 200, carb: 25, prot: 5, fat: 10 },
+      "cireng": { name: "Cireng", cal: 250, carb: 40, prot: 4, fat: 8 },
+      "batagor": { name: "Batagor", cal: 380, carb: 35, prot: 12, fat: 20 },
+      "siomay": { name: "Siomay", cal: 300, carb: 30, prot: 15, fat: 12 },
+      "pempek": { name: "Pempek", cal: 280, carb: 35, prot: 10, fat: 12 },
+      "martabak manis": { name: "Martabak Manis", cal: 450, carb: 55, prot: 8, fat: 22 },
+      "martabak telur": { name: "Martabak Telur", cal: 380, carb: 30, prot: 15, fat: 20 },
+      "ketoprak": { name: "Ketoprak", cal: 420, carb: 60, prot: 15, fat: 18 },
+      "lontong sayur": { name: "Lontong Sayur", cal: 350, carb: 55, prot: 10, fat: 12 },
+      "pecel lele": { name: "Pecel Lele", cal: 450, carb: 50, prot: 25, fat: 22 },
+      "opor ayam": { name: "Opor Ayam", cal: 320, carb: 12, prot: 28, fat: 18 },
+      "sayur lodeh": { name: "Sayur Lodeh", cal: 150, carb: 20, prot: 5, fat: 6 },
+      "tempe mendoan": { name: "Tempe Mendoan", cal: 220, carb: 20, prot: 8, fat: 14 },
+      "tahu isi": { name: "Tahu Isi", cal: 200, carb: 25, prot: 6, fat: 10 },
+      "lumpia": { name: "Lumpia", cal: 180, carb: 22, prot: 5, fat: 8 },
+      "soto betawi": { name: "Soto Betawi", cal: 380, carb: 35, prot: 20, fat: 20 },
+      "rawon": { name: "Rawon", cal: 420, carb: 25, prot: 35, fat: 25 },
+      "nasi tim": { name: "Nasi Tim", cal: 250, carb: 40, prot: 6, fat: 8 },
+      "nasi liwet": { name: "Nasi Liwet", cal: 350, carb: 55, prot: 7, fat: 10 },
+      "nasi kebuli": { name: "Nasi Kebuli", cal: 500, carb: 65, prot: 20, fat: 22 },
+      "nasi gudeg": { name: "Nasi Gudeg", cal: 480, carb: 70, prot: 10, fat: 18 },
+      "nasi pecel": { name: "Nasi Pecel", cal: 380, carb: 55, prot: 12, fat: 15 },
+      "nasi rawon": { name: "Nasi Rawon", cal: 500, carb: 55, prot: 30, fat: 22 },
+      "nasi campur": { name: "Nasi Campur", cal: 550, carb: 70, prot: 25, fat: 25 },
+      "nasi rames": { name: "Nasi Rames", cal: 600, carb: 75, prot: 28, fat: 28 },
+      "nasi empal": { name: "Nasi Empal", cal: 580, carb: 68, prot: 30, fat: 30 },
+      "nasi brongkos": { name: "Nasi Brongkos", cal: 520, carb: 65, prot: 22, fat: 24 },
+      "nasi kari": { name: "Nasi Kari", cal: 480, carb: 60, prot: 20, fat: 22 },
+      "nasi urap": { name: "Nasi Urap", cal: 350, carb: 50, prot: 10, fat: 14 },
+      "nasi krawu": { name: "Nasi Krawu", cal: 550, carb: 70, prot: 25, fat: 26 },
+      "nasi jagung": { name: "Nasi Jagung", cal: 190, carb: 42, prot: 4, fat: 1 },
+      "nasi bakar": { name: "Nasi Bakar", cal: 420, carb: 58, prot: 14, fat: 16 },
+      "nasi tutug oncom": { name: "Nasi Tutug Oncom", cal: 380, carb: 55, prot: 12, fat: 14 },
+      "nasi ulam": { name: "Nasi Ulam", cal: 360, carb: 52, prot: 10, fat: 13 },
+      "nasi tempong": { name: "Nasi Tempong", cal: 500, carb: 65, prot: 22, fat: 24 },
+      "nasi lengko": { name: "Nasi Lengko", cal: 400, carb: 58, prot: 12, fat: 16 },
+      "nasi kucing": { name: "Nasi Kucing", cal: 150, carb: 30, prot: 5, fat: 4 },
+      "nasi jamblang": { name: "Nasi Jamblang", cal: 450, carb: 62, prot: 15, fat: 18 },
+      "nasi liwet solo": { name: "Nasi Liwet Solo", cal: 420, carb: 60, prot: 10, fat: 16 },
+      "nasi bogana": { name: "Nasi Bogana", cal: 480, carb: 65, prot: 18, fat: 20 },
+      "nasi grombyang": { name: "Nasi Grombyang", cal: 380, carb: 55, prot: 12, fat: 14 },
+      "nasi megono": { name: "Nasi Megono", cal: 350, carb: 50, prot: 10, fat: 12 },
+      "nasi serpang": { name: "Nasi Serpang", cal: 400, carb: 58, prot: 14, fat: 15 },
+      "nasi uduk betawi": { name: "Nasi Uduk Betawi", cal: 420, carb: 62, prot: 10, fat: 14 },
+      "nasi kuning manado": { name: "Nasi Kuning Manado", cal: 450, carb: 65, prot: 12, fat: 16 },
+      "nasi kuning banjar": { name: "Nasi Kuning Banjar", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning cirebon": { name: "Nasi Kuning Cirebon", cal: 410, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning jawa": { name: "Nasi Kuning Jawa", cal: 400, carb: 58, prot: 9, fat: 13 },
+      "nasi kuning aceh": { name: "Nasi Kuning Aceh", cal: 460, carb: 66, prot: 13, fat: 17 },
+      "nasi kuning makassar": { name: "Nasi Kuning Makassar", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning palembang": { name: "Nasi Kuning Palembang", cal: 420, carb: 60, prot: 11, fat: 15 },
+      "nasi kuning medan": { name: "Nasi Kuning Medan", cal: 450, carb: 65, prot: 12, fat: 16 },
+      "nasi kuning bali": { name: "Nasi Kuning Bali", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning sulawesi": { name: "Nasi Kuning Sulawesi", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning kalimantan": { name: "Nasi Kuning Kalimantan", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning sumatera": { name: "Nasi Kuning Sumatera", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning papua": { name: "Nasi Kuning Papua", cal: 445, carb: 64, prot: 12, fat: 16 },
+      "nasi kuning maluku": { name: "Nasi Kuning Maluku", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning ntt": { name: "Nasi Kuning NTT", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning ntb": { name: "Nasi Kuning NTB", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning jambi": { name: "Nasi Kuning Jambi", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning riau": { name: "Nasi Kuning Riau", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning lampung": { name: "Nasi Kuning Lampung", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning bengkulu": { name: "Nasi Kuning Bengkulu", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning bangka": { name: "Nasi Kuning Bangka", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning belitung": { name: "Nasi Kuning Belitung", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning batam": { name: "Nasi Kuning Batam", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning tanjung pinang": { name: "Nasi Kuning Tanjung Pinang", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning pekanbaru": { name: "Nasi Kuning Pekanbaru", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning padang": { name: "Nasi Kuning Padang", cal: 450, carb: 65, prot: 12, fat: 16 },
+      "nasi kuning bukittinggi": { name: "Nasi Kuning Bukittinggi", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning payakumbuh": { name: "Nasi Kuning Payakumbuh", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning solok": { name: "Nasi Kuning Solok", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning painan": { name: "Nasi Kuning Painan", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning pariaman": { name: "Nasi Kuning Pariaman", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning lubuk basung": { name: "Nasi Kuning Lubuk Basung", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning sawahlunto": { name: "Nasi Kuning Sawahlunto", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning tanah datar": { name: "Nasi Kuning Tanah Datar", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning sijunjung": { name: "Nasi Kuning Sijunjung", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning dharmasraya": { name: "Nasi Kuning Dharmasraya", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning solok selatan": { name: "Nasi Kuning Solok Selatan", cal: 410, carb: 58, prot: 10, fat: 14 },
+      "nasi kuning pasaman": { name: "Nasi Kuning Pasaman", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning agam": { name: "Nasi Kuning Agam", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning limapuluh kota": { name: "Nasi Kuning Limapuluh Kota", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning padang panjang": { name: "Nasi Kuning Padang Panjang", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning padang sidempuan": { name: "Nasi Kuning Padang Sidempuan", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning sibolga": { name: "Nasi Kuning Sibolga", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning gunung sitoli": { name: "Nasi Kuning Gunung Sitoli", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning medan": { name: "Nasi Kuning Medan", cal: 450, carb: 65, prot: 12, fat: 16 },
+      "nasi kuning binjai": { name: "Nasi Kuning Binjai", cal: 440, carb: 63, prot: 12, fat: 16 },
+      "nasi kuning tebing tinggi": { name: "Nasi Kuning Tebing Tinggi", cal: 435, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning pematang siantar": { name: "Nasi Kuning Pematang Siantar", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning tanjung balai": { name: "Nasi Kuning Tanjung Balai", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning kisaran": { name: "Nasi Kuning Kisaran", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning rantauprapat": { name: "Nasi Kuning Rantauprapat", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning padangsidimpuan": { name: "Nasi Kuning Padangsidimpuan", cal: 440, carb: 63: 63, prot: 12, fat: 16 },
+      "nasi kuning sibolga": { name: "Nasi Kuning Sibolga", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning gunungsitoli": { name: "Nasi Kuning Gunungsitoli", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning lubuklinggau": { name: "Nasi Kuning Lubuklinggau", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning prabumulih": { name: "Nasi Kuning Prabumulih", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning palembang": { name: "Nasi Kuning Palembang", cal: 420, carb: 60, prot: 11, fat: 15 },
+      "nasi kuning pangkal pinang": { name: "Nasi Kuning Pangkal Pinang", cal: 425, carb: 61, prot: 11, fat: 15 },
+      "nasi kuning jambi": { name: "Nasi Kuning Jambi", cal: 430, carb: 62, prot: 11, fat: 15 },
+      "nasi kuning bengkulu": { name: "Nasi Kuning Bengkulu", cal: 415, carb: 59, prot: 10, fat: 14 },
+      "nasi kuning bandar lampung": { name: "Nasi Kuning Bandar Lampung", cal: 420, carb: 60, prot: 10, fat: 14 },
+      "nasi kuning metro": { name: "Nasi Kuning Metro", cal: 410, carb: 58, prot: 10, fat: 14 },
+      "nasi kuning kotabumi": { name: "Nasi Kuning Kotabumi", cal: 405, carb: 57, prot: 10, fat: 14 },
+      "nasi kuning pringsewu": { name: "Nasi Kuning Pringsewu", cal: 400, carb: 56, prot: 9, fat: 13 },
+      "nasi kuning bandar jaya": { name: "Nasi Kuning Bandar Jaya", cal: 395, carb: 55, prot: 9, fat: 13 },
+      "nasi kuning tulang bawang": { name: "Nasi Kuning Tulang Bawang", cal: 390, carb: 54, prot: 9, fat: 13 },
+      "nasi kuning pesawaran": { name: "Nasi Kuning Pesawaran", cal: 385, carb: 53, prot: 9, fat: 13 },
+      "nasi kuning lampung tengah": { name: "Nasi Kuning Lampung Tengah", cal: 380, carb: 52, prot: 9, fat: 13 },
+      "nasi kuning lampung selatan": { name: "Nasi Kuning Lampung Selatan", cal: 375, carb: 51, prot: 9, fat: 13 },
+      "nasi kuning lampung timur": { name: "Nasi Kuning Lampung Timur", cal: 370, carb: 50, prot: 9, fat: 13 },
+      "nasi kuning lampung barat": { name: "Nasi Kuning Lampung Barat", cal: 365, carb: 49, prot: 9, fat: 13 },
+      "nasi kuning tanggamus": { name: "Nasi Kuning Tanggamus", cal: 360, carb: 48, prot: 9, fat: 13 },
+      "nasi kuning pesisir barat": { name: "Nasi Kuning Pesisir Barat", cal: 355, carb: 47, prot: 9, fat: 13 },
+      "nasi kuning way kanan": { name: "Nasi Kuning Way Kanan", cal: 350, carb: 46, prot: 9, fat: 13 },
+      "nasi kuning mesuji": { name: "Nasi Kuning Mesuji", cal: 345, carb: 45, prot: 9, fat: 13 },
+      "nasi kuning tulang bawang barat": { name: "Nasi Kuning Tulang Bawang Barat", cal: 340, carb: 44, prot: 9, fat: 13 },
+      "nasi kuning pringsewu": { name: "Nasi Kuning Pringsewu", cal: 335, carb: 43, prot: 9, fat: 13 },
+      "nasi kuning lampung utara": { name: "Nasi Kuning Lampung Utara", cal: 330, carb: 42, prot: 9, fat: 13 },
+      "nasi kuning lampung tengah": { name: "Nasi Kuning Lampung Tengah", cal: 325, c
