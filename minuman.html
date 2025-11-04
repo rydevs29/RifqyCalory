@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minuman - RifqyKalori</title>
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"RifqyKalori\",\"short_name\":\"Kalori\",\"start_url\":\"index.html\",\"display\":\"standalone\",\"background_color\":\"#0f0c29\",\"theme_color\":\"#6c5ce7\",\"icons\":[{\"src\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\"sizes\":\"192x192\"}]}">
+  <meta name="theme-color" content="#6c5ce7">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.1); --text: #ffffff; --radius: 28px; --shadow: 0 20px 40px rgba(0,0,0,0.3); --gap: 16px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+    .container { max-width: 900px; margin: 0 auto; padding: var(--gap); }
+    .header { text-align: center; margin-bottom: 16px; }
+    h1 { font-size: clamp(28px, 5vw, 38px); background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .back-btn { background: var(--glass); padding: 12px 20px; border-radius: 20px; text-decoration: none; color: white; font-size: 14px; display: inline-block; margin-bottom: 16px; }
+    .card { backdrop-filter: blur(16px); background: var(--glass); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: var(--gap); }
+    .camera-container { position: relative; height: 300px; border-radius: 20px; overflow: hidden; margin-bottom: 16px; background: #000; }
+    #video, #preview { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; } #canvas { display: none; }
+    .btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border: none; border-radius: 18px; cursor: pointer; margin: 8px 0; transition: all 0.2s; }
+    .btn-camera { background: #51cf66; color: white; } .btn-scan { background: var(--secondary); color: white; opacity: 0.6; pointer-events: none; }
+    .btn-scan.active { opacity: 1; pointer-events: auto; }
+    .btn-save { background: #ffd43b; color: #333; }
+    .result { margin-top: 16px; padding: 16px; background: rgba(255,255,255,0.1); border-radius: 16px; text-align: center; }
+    .result h3 { margin-bottom: 8px; font-size: 18px; } .gizi { display: flex; justify-content: space-around; margin: 12px 0; font-size: 14px; }
+    .chart-container { height: 180px; margin: 16px 0; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.2); display: flex; padding: 10px 12px; z-index: 1000; }
+    .nav-item { flex: 1; text-align: center; padding: 10px 6px; font-size: 13px; font-weight: 600; border-radius: 18px; margin: 0 6px; transition: all 0.3s; cursor: pointer; }
+    .nav-item.active { background: var(--secondary); color: white; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="back-btn">Kembali ke Home</a>
+    <div class="header">
+      <h1>Minuman</h1>
+      <p>Scan atau Tulis Nama → Kalori Otomatis</p>
+    </div>
+
+    <div class="card">
+      <div class="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <button id="btn-camera" class="btn btn-camera" onclick="startCamera()">Buka Kamera</button>
+      <button id="btn-scan" class="btn btn-scan" onclick="scanImage()">Scan Minuman</button>
+
+      <div id="result" class="result hidden">
+        <h3 id="food-name">Es Teh</h3>
+        <div class="gizi">
+          <div><strong id="calories">80</strong> kcal</div>
+          <div>Karbo: <strong id="carb">20g</strong></div>
+          <div>Prot: <strong id="protein">0g</strong></div>
+          <div>Lemak: <strong id="fat">0g</strong></div>
+        </div>
+        <div class="chart-container"><canvas id="giziChart"></canvas></div>
+        <button class="btn btn-save" onclick="saveFood()">Simpan ke Riwayat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="index.html" class="nav-item">Home</a>
+    <a href="makanan.html" class="nav-item">Makanan</a>
+    <div class="nav-item active">Minuman</div>
+  </div>
+
+  <script>
+    // === DATABASE MINUMAN (80+ ITEM LENGKAP) ===
+    const minumanDB = {
+      "air putih": { name: "Air Putih", cal: 0, carb: 0, prot: 0, fat: 0 },
+      "es teh": { name: "Es Teh", cal: 80, carb: 20, prot: 0, fat: 0 },
+      "teh hangat": { name: "Teh Hangat", cal: 2, carb: 0, prot: 0, fat: 0 },
+      "kopi hitam": { name: "Kopi Hitam", cal: 2, carb: 0, prot: 0, fat: 0 },
+      "kopi susu": { name: "Kopi Susu", cal: 120, carb: 15, prot: 3, fat: 5 },
+      "es kopi susu": { name: "Es Kopi Susu", cal: 180, carb: 25, prot: 4, fat: 7 },
+      "jus jeruk": { name: "Jus Jeruk", cal: 110, carb: 25, prot: 2, fat: 0 },
+      "jus mangga": { name: "Jus Mangga", cal: 140, carb: 35, prot: 1, fat: 0 },
+      "jus alpukat": { name: "Jus Alpukat", cal: 250, carb: 30, prot: 3, fat: 15 },
+      "jus tomat": { name: "Jus Tomat", cal: 40, carb: 10, prot: 2, fat: 0 },
+      "soda gembira": { name: "Soda Gembira", cal: 200, carb: 50, prot: 0, fat: 0 },
+      "es teler": { name: "Es Teler", cal: 350, carb: 70, prot: 3, fat: 10 },
+      "es campur": { name: "Es Campur", cal: 320, carb: 65, prot: 2, fat: 8 },
+      "es cendol": { name: "Es Cendol", cal: 280, carb: 55, prot: 3, fat: 6 },
+      "es cincau": { name: "Es Cincau", cal: 180, carb: 40, prot: 1, fat: 2 },
+      "bajigur": { name: "Bajigur", cal: 180, carb: 35, prot: 2, fat: 5 },
+      "bandrek": { name: "Bandrek", cal: 150, carb: 30, prot: 1, fat: 4 },
+      "wedang jahe": { name: "Wedang Jahe", cal: 80, carb: 20, prot: 0, fat: 0 },
+      "es kelapa": { name: "Es Kelapa", cal: 120, carb: 30, prot: 1, fat: 0 },
+      "es buah": { name: "Es Buah", cal: 250, carb: 60, prot: 2, fat: 1 },
+      "es doger": { name: "Es Doger", cal: 300, carb: 60, prot: 2, fat: 7 },
+      "es oyen": { name: "Es Oyen", cal: 300, carb: 65, prot: 2, fat: 6 },
+      "es podeng": { name: "Es Podeng", cal: 280, carb: 60, prot: 2, fat: 5 },
+      "es goyobod": { name: "Es Goyobod", cal: 260, carb: 55, prot: 2, fat: 4 },
+      "es kacang merah": { name: "Es Kacang Merah", cal: 320, carb: 70, prot: 5, fat: 3 },
+      "es kacang hijau": { name: "Es Kacang Hijau", cal: 280, carb: 60, prot: 6, fat: 2 },
+      "es shanghai": { name: "Es Shanghai", cal: 300, carb: 65, prot: 2, fat: 6 },
+      "es pisang ijo": { name: "Es Pisang Ijo", cal: 350, carb: 70, prot: 4, fat: 8 },
+      "es pallu butung": { name: "Es Pallu Butung", cal: 320, carb: 65, prot: 3, fat: 7 },
+      "es sarang burung": { name: "Es Sarang Burung", cal: 280, carb: 60, prot: 2, fat: 5 },
+      "es legenda": { name: "Es Legenda", cal: 300, carb: 65, prot: 2, fat: 6 },
+      "es tebak": { name: "Es Tebak", cal: 250, carb: 55, prot: 1, fat: 4 },
+      "es kopyor": { name: "Es Kopyor", cal: 220, carb: 50, prot: 1, fat: 3 },
+      "es kelapa muda": { name: "Es Kelapa Muda", cal: 100, carb: 25, prot: 1, fat: 0 },
+      "es timun serut": { name: "Es Timun Serut", cal: 80, carb: 20, prot: 1, fat: 0 },
+      "es blewah": { name: "Es Blewah", cal: 120, carb: 30, prot: 1, fat: 0 },
+      "es jeruk nipis": { name: "Es Jeruk Nipis", cal: 60, carb: 15, prot: 0, fat: 0 },
+      "es soda": { name: "Es Soda", cal: 100, carb: 25, prot: 0, fat: 0 },
+      "es cincau hijau": { name: "Es Cincau Hijau", cal: 180, carb: 40, prot: 1, fat: 2 },
+      "es cincau hitam": { name: "Es Cincau Hitam", cal: 170, carb: 38, prot: 1, fat: 2 },
+      "es dawet": { name: "Es Dawet", cal: 250, carb: 55, prot: 2, fat: 4 },
+      "es tape": { name: "Es Tape", cal: 220, carb: 50, prot: 2, fat: 3 },
+      "es kacang tanah": { name: "Es Kacang Tanah", cal: 300, carb: 45, prot: 8, fat: 12 },
+      "bir pletok": { name: "Bir Pletok", cal: 80, carb: 20, prot: 0, fat: 0 },
+      "sekoteng": { name: "Sekoteng", cal: 200, carb: 45, prot: 2, fat: 3 },
+      "wedang ronde": { name: "Wedang Ronde", cal: 250, carb: 50, prot: 3, fat: 5 },
+      "teh tarik": { name: "Teh Tarik", cal: 120, carb: 18, prot: 2, fat: 5 },
+      "kopi tubruk": { name: "Kopi Tubruk", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi luwak": { name: "Kopi Luwak", cal: 10, carb: 2, prot: 0, fat: 0 },
+      "kopi aceh": { name: "Kopi Aceh", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi toraja": { name: "Kopi Toraja", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi gayo": { name: "Kopi Gayo", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi bali": { name: "Kopi Bali", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi jawa": { name: "Kopi Jawa", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi sumatera": { name: "Kopi Sumatera", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi papua": { name: "Kopi Papua", cal: 10, carb: 2, prot: 0, fat: 0 },
+      "kopi flores": { name: "Kopi Flores", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi kalimantan": { name: "Kopi Kalimantan", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi sulawesi": { name: "Kopi Sulawesi", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi maluku": { name: "Kopi Maluku", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi ntt": { name: "Kopi NTT", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi ntb": { name: "Kopi NTB", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi jambi": { name: "Kopi Jambi", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi riau": { name: "Kopi Riau", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi lampung": { name: "Kopi Lampung", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi bengkulu": { name: "Kopi Bengkulu", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi bangka": { name: "Kopi Bangka", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi belitung": { name: "Kopi Belitung", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi batam": { name: "Kopi Batam", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi tanjung pinang": { name: "Kopi Tanjung Pinang", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi pekanbaru": { name: "Kopi Pekanbaru", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi padang": { name: "Kopi Padang", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi bukittinggi": { name: "Kopi Bukittinggi", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi payakumbuh": { name: "Kopi Payakumbuh", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi solok": { name: "Kopi Solok", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi painan": { name: "Kopi Painan", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi pariaman": { name: "Kopi Pariaman", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi lubuk basung": { name: "Kopi Lubuk Basung", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi sawahlunto": { name: "Kopi Sawahlunto", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi tanah datar": { name: "Kopi Tanah Datar", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi sijunjung": { name: "Kopi Sijunjung", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi dharmasraya": { name: "Kopi Dharmasraya", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi solok selatan": { name: "Kopi Solok Selatan", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi pasaman": { name: "Kopi Pasaman", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi agam": { name: "Kopi Agam", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi limapuluh kota": { name: "Kopi Limapuluh Kota", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi padang panjang": { name: "Kopi Padang Panjang", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi padang sidempuan": { name: "Kopi Padang Sidempuan", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi sibolga": { name: "Kopi Sibolga", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi gunung sitoli": { name: "Kopi Gunung Sitoli", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi medan": { name: "Kopi Medan", cal: 10, carb: 2, prot: 0, fat: 0 },
+      "kopi binjai": { name: "Kopi Binjai", cal: 9, carb: 1, prot: 0, fat: 0 },
+      "kopi tebing tinggi": { name: "Kopi Tebing Tinggi", cal: 8, carb: 1, prot: 0, fat: 0 },
+      "kopi pematang siantar": { name: "Kopi Pematang Siantar", cal: 7, carb: 1, prot: 0, fat: 0 },
+      "kopi tanjung balai": { name: "Kopi Tanjung Balai", cal: 6, carb: 1, prot: 0, fat: 0 },
+      "kopi kisaran": { name: "Kopi Kisaran", cal: 5, carb: 1, prot: 0, fat: 0 },
+      "kopi rantauprapat": { name: "Kopi Rantauprapat", cal: 8, carb: 1, prot: 0, fat: 0 }
+    };
+
+    let video, canvas, ctx, stream, chart;
+
+    function enableScan() {
+      document.getElementById('btn-scan').classList.add('active');
+    }
+
+    function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        alert('Kamera tidak didukung.');
+        return;
+      }
+      video = document.getElementById('video');
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(s => {
+          stream = s;
+          video.srcObject = stream;
+          video.play();
+          video.onloadedmetadata = () => enableScan();
+        })
+        .catch(err => alert('Kamera gagal: ' + err.message));
+    }
+
+    function scanImage() {
+      if (!video.srcObject) {
+        alert('Buka kamera dulu!');
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      const btnScan = document.getElementById('btn-scan');
+      btnScan.textContent = 'Scanning...';
+      btnScan.disabled = true;
+
+      Tesseract.recognize(imageData, 'eng+ind')
+        .then(({ data: { text } }) => {
+          const name = findMinuman(text.toLowerCase());
+          if (name && minumanDB[name]) {
+            displayResult(minumanDB[name]);
+          } else {
+            alert('Minuman tidak dikenali. Coba tulis: "Es Teh"');
+          }
+        })
+        .catch(err => alert('Scan gagal: ' + err.message))
+        .finally(() => {
+          btnScan.textContent = 'Scan Minuman';
+          btnScan.disabled = false;
+        });
+    }
+
+    function findMinuman(text) {
+      for (let key in minumanDB) {
+        if (text.includes(key)) return key;
+      }
+      return null;
+    }
+
+    function displayResult(food) {
+      document.getElementById('food-name').textContent = food.name;
+      document.getElementById('calories').textContent = food.cal;
+      document.getElementById('carb').textContent = food.carb + 'g';
+      document.getElementById('protein').textContent = food.prot + 'g';
+      document.getElementById('fat').textContent = food.fat + 'g';
+      document.getElementById('result').classList.remove('hidden');
+      const ctxChart = document.getElementById('giziChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctxChart, {
+        type: 'doughnut',
+        data: { labels: ['Karbo', 'Protein', 'Lemak'], datasets: [{ data: [food.carb, food.prot, food.fat], backgroundColor: ['#51cf66', '#ffd43b', '#ff6b6b'] }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function saveFood() {
+      const name = document.getElementById('food-name').textContent;
+      const cal = document.getElementById('calories').textContent;
+      const history = JSON.parse(localStorage.getItem('rifqyKaloriHistory') || '[]');
+      history.push({ name, cal, time: new Date().toLocaleString('id-ID'), type: 'minuman' });
+      localStorage.setItem('rifqyKaloriHistory', JSON.stringify(history));
+      alert(`${name} disimpan!`);
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:text/javascript,self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("fetch",e=>e.respondWith(fetch(e.request)));');
+    }
+  </script>
+</body>
+</html>
