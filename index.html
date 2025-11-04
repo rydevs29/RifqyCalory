@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.08); --text: #fff; --radius: 32px; --shadow: 0 25px 50px rgba(0,0,0,0.4); }
+    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.08); --text: #fff; --radius: 32px; --shadow: 0 25px 50px rgba(0,0,0,0.4); --danger: #ff6b6b; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: var(--text); min-height: 100vh; padding: 16px 16px 100px; }
     .container { max-width: 500px; margin: 0 auto; }
@@ -37,50 +37,104 @@
     .nav-item { flex: 1; text-align: center; padding: 12px; font-size: 0.85rem; font-weight: 600; border-radius: 20px; margin: 0 8px; transition: all 0.3s; }
     .nav-item.active { background: var(--primary); color: white; }
     .hidden { display: none; }
-    .loading { text-align: center; padding: 20px; font-size: 0.9rem; opacity: 0.7; }
+
+    /* RIWAYAT & ABOUT PAGE */
+    .page { display: none; padding: 20px; }
+    .page.active { display: block; }
+    .history-item { background: rgba(255,255,255,0.1); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .history-item .info { flex: 1; }
+    .history-item .time { font-size: 0.8rem; opacity: 0.7; }
+    .history-item .name { font-weight: 600; }
+    .history-item .cal { color: #ffd43b; }
+    .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; }
+
+    .about-content { text-align: center; padding: 20px; }
+    .about-content h2 { font-size: 1.6rem; margin-bottom: 16px; background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .about-content p { font-size: 0.95rem; opacity: 0.9; line-height: 1.6; margin-bottom: 16px; }
+    .source-list { text-align: left; background: rgba(255,255,255,0.05); padding: 16px; border-radius: 16px; font-size: 0.9rem; }
+    .source-list li { margin: 8px 0; }
+    .source-list a { color: #8f94fb; text-decoration: none; }
+    .copyright { margin-top: 24px; font-size: 0.8rem; opacity: 0.7; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>RifqyKalori</h1>
-      <p class="subtitle">Foto → Kalori + Gizi Otomatis!</p>
-    </div>
-
-    <div class="tab-nav">
-      <button class="tab-btn active" onclick="switchTab('makanan')">Makanan</button>
-      <button class="tab-btn" onclick="switchTab('minuman')">Minuman</button>
-    </div>
-
-    <div class="card">
-      <div class="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
+    <!-- SCAN PAGE -->
+    <div id="scan-page" class="page active">
+      <div class="header">
+        <h1>RifqyKalori</h1>
+        <p class="subtitle">Foto → Kalori + Gizi Otomatis!</p>
       </div>
 
-      <button id="btn-camera" class="btn btn-camera" onclick="startCamera()">Buka Kamera</button>
-      <button id="btn-scan" class="btn btn-scan" onclick="scanImage()">Scan Sekarang</button>
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('makanan')">Makanan</button>
+        <button class="tab-btn" onclick="switchTab('minuman')">Minuman</button>
+      </div>
 
-      <div id="loading" class="loading hidden">Memuat data...</div>
-
-      <div id="result" class="result hidden">
-        <h3 id="food-name">Nasi Goreng</h3>
-        <div class="gizi">
-          <div><strong id="calories">450</strong> kcal</div>
-          <div>Karbo: <strong id="carb">65g</strong></div>
-          <div>Prot: <strong id="protein">12g</strong></div>
-          <div>Lemak: <strong id="fat">18g</strong></div>
+      <div class="card">
+        <div class="camera-container">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas"></canvas>
         </div>
-        <div class="chart-container"><canvas id="giziChart"></canvas></div>
-        <button class="btn btn-save" onclick="saveHistory()">Simpan</button>
+
+        <button id="btn-camera" class="btn btn-camera" onclick="startCamera()">Buka Kamera</button>
+        <button id="btn-scan" class="btn btn-scan" onclick="scanImage()">Scan Sekarang</button>
+
+        <div id="result" class="result hidden">
+          <h3 id="food-name">Nasi Goreng</h3>
+          <div class="gizi">
+            <div><strong id="calories">450</strong> kcal</div>
+            <div>Karbo: <strong id="carb">65g</strong></div>
+            <div>Prot: <strong id="protein">12g</strong></div>
+            <div>Lemak: <strong id="fat">18g</strong></div>
+          </div>
+          <div class="chart-container"><canvas id="giziChart"></canvas></div>
+          <button class="btn btn-save" onclick="saveHistory()">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIWAYAT PAGE -->
+    <div id="riwayat-page" class="page">
+      <div class="header">
+        <h1>Riwayat</h1>
+        <p class="subtitle">Semua yang kamu scan</p>
+      </div>
+      <div id="history-list"></div>
+      <div style="text-align:center; margin-top:20px;">
+        <button class="btn" style="background:#ff6b6b;" onclick="clearAllHistory()">Hapus Semua</button>
+      </div>
+    </div>
+
+    <!-- ABOUT PAGE -->
+    <div id="about-page" class="page">
+      <div class="about-content">
+        <h2>RifqyKalori v9.0</h2>
+        <p>Aplikasi scan makanan & minuman otomatis berbasis OCR + database lokal.</p>
+        <p>280+ item (200 makanan + 80 minuman) siap scan tanpa internet.</p>
+
+        <div class="source-list">
+          <p><strong>DATA SOURCE:</strong></p>
+          <ul>
+            <li><a href="https://tkpi.depkes.go.id" target="_blank">Tabel Komposisi Pangan Indonesia (TKPI) 2019 – Kemenkes RI</a></li>
+            <li><a href="https://www.fatsecret.co.id" target="_blank">FatSecret Indonesia (validasi porsi)</a></li>
+            <li><a href="https://fdc.nal.usda.gov" target="_blank">USDA FoodData Central (bahan baku)</a></li>
+            <li><a href="https://panganku.org" target="_blank">Panganku.org – BPOM RI</a></li>
+            <li>Penelitian Gizi UI & Jurnal Kesehatan Masyarakat</li>
+            <li>Estimasi porsi standar warung Indonesia</li>
+          </ul>
+        </div>
+
+        <p class="copyright">Copyright © 2025 RifqyLCC. All rights reserved.</p>
       </div>
     </div>
   </div>
 
+  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <div class="nav-item active">Scan</div>
-    <div class="nav-item" onclick="showHistory()">Riwayat</div>
-    <div class="nav-item" onclick="alert('RifqyKalori v8.0\n3 File, Scan Instan!\n© Rifqy 2025')">About</div>
+    <div class="nav-item active" onclick="showPage('scan')">Scan</div>
+    <div class="nav-item" onclick="showPage('riwayat')">Riwayat</div>
+    <div class="nav-item" onclick="showPage('about')">About</div>
   </div>
 
   <script>
@@ -88,25 +142,23 @@
     let db = {};
     let video, canvas, ctx, stream, chart;
 
-    // === LOAD DATA ===
+    // LOAD DATA
     async function loadData() {
-      document.getElementById('loading').classList.remove('hidden');
       try {
         const [makananRes, minumanRes] = await Promise.all([
           fetch('makanan.js').then(r => r.text()),
           fetch('minuman.js').then(r => r.text())
         ]);
-        eval(makananRes); // jadi window.makananDB
-        eval(minumanRes); // jadi window.minumanDB
+        eval(makananRes);
+        eval(minumanRes);
         db.makanan = window.makananDB;
         db.minuman = window.minumanDB;
       } catch (e) {
         alert('Gagal load data: ' + e.message);
-      } finally {
-        document.getElementById('loading').classList.add('hidden');
       }
     }
 
+    // TAB & PAGE
     function switchTab(tab) {
       currentTab = tab;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -114,6 +166,15 @@
       document.getElementById('result').classList.add('hidden');
     }
 
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(page + '-page').classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.nav-item[onclick="showPage('${page}')"]`).classList.add('active');
+      if (page === 'riwayat') loadHistory();
+    }
+
+    // CAMERA
     function startCamera() {
       if (!navigator.mediaDevices?.getUserMedia) return alert('Kamera tidak didukung');
       video = document.getElementById('video');
@@ -129,6 +190,7 @@
         .catch(() => alert('Kamera gagal'));
     }
 
+    // SCAN
     function scanImage() {
       if (!video?.srcObject) return alert('Buka kamera dulu!');
       canvas.width = video.videoWidth;
@@ -173,21 +235,53 @@
       });
     }
 
+    // RIWAYAT
     function saveHistory() {
       const name = document.getElementById('food-name').textContent;
       const cal = document.getElementById('calories').textContent;
       const history = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
-      history.push({ name, cal, time: new Date().toLocaleString('id-ID'), type: currentTab });
+      const now = new Date();
+      const time = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}, ${now.getHours()}.${String(now.getMinutes()).padStart(2,'0')}`;
+      history.push({ name, cal, time, type: currentTab });
       localStorage.setItem('rifqyHistory', JSON.stringify(history));
       alert(`${name} disimpan!`);
     }
 
-    function showHistory() {
+    function loadHistory() {
       const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
-      if (h.length === 0) return alert('Belum ada riwayat');
-      let list = 'RIWAYAT:\n\n';
-      h.forEach(i => list += `${i.time} → ${i.name} (${i.cal} kcal)\n`);
-      alert(list);
+      const list = document.getElementById('history-list');
+      list.innerHTML = '';
+      if (h.length === 0) {
+        list.innerHTML = '<p style="text-align:center; opacity:0.7;">Belum ada riwayat</p>';
+        return;
+      }
+      h.reverse().forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <div class="info">
+            <div class="time">${item.time}</div>
+            <div class="name">${item.name}</div>
+            <div class="cal">${item.cal} kcal</div>
+          </div>
+          <button class="btn-delete" onclick="deleteHistory(${h.length-1-idx})">Hapus</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function deleteHistory(idx) {
+      if (!confirm('Hapus item ini?')) return;
+      const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
+      h.splice(idx, 1);
+      localStorage.setItem('rifqyHistory', JSON.stringify(h));
+      loadHistory();
+    }
+
+    function clearAllHistory() {
+      if (!confirm('Hapus SEMUA riwayat?')) return;
+      localStorage.removeItem('rifqyHistory');
+      loadHistory();
     }
 
     // INIT
