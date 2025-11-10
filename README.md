@@ -1,6 +1,6 @@
 # RifqyKalori
 
-RifqyKalori adalah aplikasi web PWA (Progressive Web App) untuk scan makanan dan minuman Indonesia menggunakan OCR (Tesseract.js), menghitung kalori, karbohidrat, protein, dan lemak secara otomatis. 
+RifqyKalori adalah website untuk scan makanan dan minuman Indonesia menggunakan OCR (Tesseract.js), menghitung kalori, karbohidrat, protein, dan lemak secara otomatis. 
 
 ## Fitur Utama
 - **Scan Foto Makanan/Minuman** – Gunakan kamera HP untuk foto menu atau makanan, AI baca nama otomatis.
@@ -9,7 +9,7 @@ RifqyKalori adalah aplikasi web PWA (Progressive Web App) untuk scan makanan dan
 - **Riwayat Makan** – Simpan scan harian, hapus per item atau all.
 
 ## Cara Pakai
-1. **Buka di Browser:** Klik link demo atau download file.
+1. **Buka di Browser:** [Klik link berikut] (https://calory.rifqydev.my.id).
 2. **Buka Kamera:** Tekan "Buka Kamera" → foto tulisan makanan (e.g., "Nasi Goreng").
 3. **Scan:** Tekan "Scan Sekarang" → AI baca → kalori muncul!
 4. **Simpan:** Tekan "Simpan" → masuk riwayat.
@@ -18,7 +18,7 @@ RifqyKalori adalah aplikasi web PWA (Progressive Web App) untuk scan makanan dan
 - **Frontend:** HTML5 + CSS3 + JavaScript (Vanilla).
 - **OCR:** Tesseract.js – Baca tulisan dari foto.
 - **Chart:** Chart.js – Grafik gizi.
-- **Storage:** LocalStorage – Riwayat offline.
+- **Storage:** LocalStorage
 - **PWA:** Manifest.json + Service Worker – Installable.
 
 ## Database (Sumber: TKPI Kemenkes RI + FatSecret)
@@ -29,5 +29,5 @@ RifqyKalori adalah aplikasi web PWA (Progressive Web App) untuk scan makanan dan
 MIT License – © 2025 RifqyDev
 
 ## Kontak
-- GitHub: [@rifqy](https://github.com/rydevs29)
+- GitHub: [RifqyDev](https://github.com/rydevs29)
 - Email: rifqydev@gmail.com
