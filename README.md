@@ -9,7 +9,7 @@ RifqyKalori adalah website untuk scan makanan dan minuman Indonesia menggunakan 
 - **Riwayat Makan** – Simpan scan harian, hapus per item atau all.
 
 ## Cara Pakai
-1. **Buka di Browser:** [Klik link berikut] (https://calory.rifqydev.my.id).
+1. **Buka di Browser:** [Klik link berikut](https://calory.rifqydev.my.id).
 2. **Buka Kamera:** Tekan "Buka Kamera" → foto tulisan makanan (e.g., "Nasi Goreng").
 3. **Scan:** Tekan "Scan Sekarang" → AI baca → kalori muncul!
 4. **Simpan:** Tekan "Simpan" → masuk riwayat.
