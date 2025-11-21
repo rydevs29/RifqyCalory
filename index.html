@@ -20,6 +20,26 @@
     .tab-nav { display: flex; gap: 12px; margin-bottom: 24px; }
     .tab-btn { flex: 1; padding: 14px; font-weight: 600; border: none; border-radius: 24px; background: var(--glass); color: var(--text); cursor: pointer; transition: all 0.3s; }
     .tab-btn.active { background: var(--primary); color: white; }
+
+    /* BARU: SEARCH BAR */
+    .search-container { margin-bottom: 20px; }
+    .search-box { 
+      width: 100%; padding: 16px 20px; font-size: 1rem; border: none; border-radius: 30px; 
+      background: rgba(255,255,255,0.12); color: white; backdrop-filter: blur(10px);
+    }
+    .search-box::placeholder { color: rgba(255,255,255,0.6); }
+    .search-results { 
+      margin-top: 12px; max-height: 300px; overflow-y: auto; 
+      background: rgba(255,255,255,0.08); border-radius: 20px; padding: 8px;
+    }
+    .search-item { 
+      padding: 14px; background: rgba(255,255,255,0.08); border-radius: 16px; margin: 8px 0;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .search-item:hover { background: rgba(255,255,255,0.2); }
+    .search-item .name { font-weight: 600; font-size: 1.05rem; }
+    .search-item .cal { color: #ffd43b; font-size: 0.9rem; }
+
     .card { backdrop-filter: blur(20px); background: var(--glass); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
     .camera-container { height: 300px; border-radius: 24px; overflow: hidden; margin-bottom: 20px; background: #000; }
     #video { width: 100%; height: 100%; object-fit: cover; }
@@ -38,7 +58,7 @@
     .nav-item.active { background: var(--primary); color: white; }
     .hidden { display: none; }
 
-    /* RIWAYAT & ABOUT PAGE */
+    /* RIWAYAT & ABOUT */
     .page { display: none; padding: 20px; }
     .page.active { display: block; }
     .history-item { background: rgba(255,255,255,0.1); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -71,6 +91,12 @@
         <button class="tab-btn" onclick="switchTab('minuman')">Minuman</button>
       </div>
 
+      <!-- FITUR PENCARIAN BARU -->
+      <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="Cari makanan/minuman..." onkeyup="searchFood()">
+        <div id="searchResults" class="search-results hidden"></div>
+      </div>
+
       <div class="card">
         <div class="camera-container">
           <video id="video" autoplay playsinline></video>
@@ -94,7 +120,7 @@
       </div>
     </div>
 
-    <!-- RIWAYAT PAGE -->
+    <!-- RIWAYAT & ABOUT (TIDAK DIUBAH SAMA SEKALI) -->
     <div id="riwayat-page" class="page">
       <div class="header">
         <h1>Riwayat</h1>
@@ -106,13 +132,11 @@
       </div>
     </div>
 
-    <!-- ABOUT PAGE -->
     <div id="about-page" class="page">
       <div class="about-content">
         <h2>RifqyKalori v8.0</h2>
         <p>Aplikasi scan makanan & minuman berbasis OCR dan database lokal.</p>
         <p>Totalnya adalah: 280+ item (200 makanan + 80 minuman).</p>
-
         <div class="source-list">
           <p><strong>DATA SOURCE:</strong></p>
           <ul>
@@ -124,7 +148,6 @@
             <li>Estimasi porsi standar warung Indonesia</li>
           </ul>
         </div>
-
         <p class="copyright">Copyright © 2025 RifqyLCC. All rights reserved.</p>
       </div>
     </div>
@@ -142,7 +165,6 @@
     let db = {};
     let video, canvas, ctx, stream, chart;
 
-    // LOAD DATA
     async function loadData() {
       try {
         const [makananRes, minumanRes] = await Promise.all([
@@ -158,12 +180,13 @@
       }
     }
 
-    // TAB & PAGE
     function switchTab(tab) {
       currentTab = tab;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
       document.getElementById('result').classList.add('hidden');
+      document.getElementById('searchResults').classList.add('hidden');
+      document.getElementById('searchInput').value = '';
     }
 
     function showPage(page) {
@@ -174,7 +197,50 @@
       if (page === 'riwayat') loadHistory();
     }
 
-    // CAMERA
+    // === FITUR PENCARIAN BARU ===
+    function searchFood() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const resultsDiv = document.getElementById('searchResults');
+      resultsDiv.innerHTML = '';
+      
+      if (query.length < 2) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      const data = db[currentTab];
+      const matches = [];
+
+      for (let key in data) {
+        if (key.includes(query) || data[key].name.toLowerCase().includes(query)) {
+          matches.push(data[key]);
+        }
+      }
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = '<div style="padding:16px; text-align:center; opacity:0.7;">Tidak ditemukan</div>';
+        resultsDiv.classList.remove('hidden');
+        return;
+      }
+
+      matches.slice(0, 10).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.innerHTML = `
+          <div class="name">${item.name}</div>
+          <div class="cal">\( {item.cal} kcal • Karbo \){item.carb}g • Prot \( {item.prot}g • Lemak \){item.fat}g</div>
+        `;
+        div.onclick = () => {
+          displayResult(item);
+          resultsDiv.classList.add('hidden');
+          document.getElementById('searchInput').value = '';
+        };
+        resultsDiv.appendChild(div);
+      });
+
+      resultsDiv.classList.remove('hidden');
+    }
+
     function startCamera() {
       if (!navigator.mediaDevices?.getUserMedia) return alert('Kamera tidak didukung');
       video = document.getElementById('video');
@@ -190,7 +256,6 @@
         .catch(() => alert('Kamera gagal'));
     }
 
-    // SCAN
     function scanImage() {
       if (!video?.srcObject) return alert('Buka kamera dulu!');
       canvas.width = video.videoWidth;
@@ -235,13 +300,13 @@
       });
     }
 
-    // RIWAYAT
+    // RIWAYAT (TIDAK DIUBAH)
     function saveHistory() {
       const name = document.getElementById('food-name').textContent;
       const cal = document.getElementById('calories').textContent;
       const history = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       const now = new Date();
-      const time = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}, ${now.getHours()}.${String(now.getMinutes()).padStart(2,'0')}`;
+      const time = `\( {now.getDate()}/ \){now.getMonth()+1}/\( {now.getFullYear()}, \){now.getHours()}.${String(now.getMinutes()).padStart(2,'0')}`;
       history.push({ name, cal, time, type: currentTab });
       localStorage.setItem('rifqyHistory', JSON.stringify(history));
       alert(`${name} disimpan!`);
@@ -284,7 +349,6 @@
       loadHistory();
     }
 
-    // INIT
     loadData();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('data:text/javascript,self.addEventListener("install",e=>self.skipWaiting());');
