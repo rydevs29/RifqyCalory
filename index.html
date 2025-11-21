@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RifqyKalori</title>
-  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"RifqyKalori\",\"short_name\":\"Kalori\",\"start_url\":\"index.html\",\"display\":\"standalone\",\"background_color\":\"#0f0c29\",\"theme_color\":\"#6c5ce7\",\"icons\":[{\"src\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\"sizes\":\"192x192\"}]}">
+  <title>RifqyCalory</title>
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"RifqyCalory\",\"short_name\":\"Calory\",\"start_url\":\"index.html\",\"display\":\"standalone\",\"background_color\":\"#0f0c29\",\"theme_color\":\"#6c5ce7\",\"icons\":[{\"src\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\"sizes\":\"192x192\"}]}">
   <meta name="theme-color" content="#6c5ce7">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.08); --text: #fff; --radius: 32px; --shadow: 0 25px 50px rgba(0,0,0,0.4); --danger: #ff6b6b; }
+    :root { --primary: #6c5ce7; --secondary: #8f94fb; --bg: #0f0c29; --glass: rgba(255,255,255,0.08); --text: #fff; --radius: 32px; --shadow: 0 25px 50px rgba(0,0,0,0.4); --danger: #ff6b6b; --yellow: #ffd43b; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: var(--text); min-height: 100vh; padding: 16px 16px 100px; }
     .container { max-width: 500px; margin: 0 auto; }
     .header { text-align: center; margin-bottom: 24px; }
-    h1 { font-size: 2.6rem; background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    h1 { font-size: 2.6rem; background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
     .subtitle { font-size: 1rem; opacity: 0.9; margin: 8px 0; }
     .tab-nav { display: flex; gap: 12px; margin-bottom: 20px; }
     .tab-btn { flex: 1; padding: 14px; font-weight: 600; border: none; border-radius: 24px; background: var(--glass); color: var(--text); cursor: pointer; transition: all 0.3s; }
@@ -36,14 +36,14 @@
     }
     .search-item:hover { background: rgba(255,255,255,0.2); }
     .search-item .name { font-weight: 600; font-size: 1.1rem; }
-    .search-item .cal { color: #ffd43b; font-size: 0.95rem; }
+    .search-item .cal { color: var(--yellow); font-size: 0.95rem; }
 
     .card { backdrop-filter: blur(20px); background: var(--glass); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
-    .btn-save { width: 100%; padding: 16px; background: #ffd43b; color: #333; border: none; border-radius: 24px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    .btn-save { width: 100%; padding: 16px; background: var(--yellow); color: #333; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; margin-top: 16px; font-size: 1.05rem; }
 
     .result { margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 20px; text-align: center; }
-    .result h3 { font-size: 1.6rem; margin-bottom: 12px; }
-    .gizi { display: flex; justify-content: space-around; margin: 16px 0; font-size: 1rem; }
+    .result h3 { font-size: 1.8rem; margin-bottom: 12px; font-weight: 700; }
+    .gizi { display: flex; justify-content: space-around; margin: 16px 0; font-size: 1rem; font-weight: 500; }
     .chart-container { height: 200px; margin: 20px 0; }
 
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1); display: flex; padding: 12px; z-index: 1000; }
@@ -52,16 +52,19 @@
 
     .page { display: none; }
     .page.active { display: block; }
-    .history-item { background: rgba(255,255,255,0.1); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* RIWAYAT */
+    .daily-total { background: rgba(255,212,59,0.15); padding: 16px; border-radius: 20px; text-align: center; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; color: var(--yellow); }
+    .history-item { background: rgba(255,255,255,0.1); padding: 18px; border-radius: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .history-item .info { flex: 1; }
-    .history-item .time { font-size: 0.8rem; opacity: 0.7; }
-    .history-item .name { font-weight: 600; }
-    .history-item .cal { color: #ffd43b; }
-    .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; }
+    .history-item .time { font-size: 0.85rem; opacity: 0.7; margin-bottom: 4px; }
+    .history-item .name { font-weight: 600; font-size: 1.1rem; }
+    .history-item .cal { color: var(--yellow); font-weight: 700; }
+    .btn-delete { background: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 50px; font-size: 0.85rem; cursor: pointer; }
 
     .about-content { text-align: center; padding: 20px; }
-    .about-content h2 { font-size: 1.6rem; margin-bottom: 16px; background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .copyright { margin-top: 24px; font-size: 0.8rem; opacity: 0.7; }
+    .about-content h2 { font-size: 1.8rem; margin-bottom: 16px; background: linear-gradient(to right, #6c5ce7, #8f94fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+    .copyright { margin-top: 32px; font-size: 0.8rem; opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -69,17 +72,17 @@
     <!-- SEARCH PAGE -->
     <div id="scan-page" class="page active">
       <div class="header">
-        <h1>RifqyKalori</h1>
-        <p class="subtitle">Cari makanan & minuman — langsung tahu kalori + gizi</p>
+        <h1>RifqyCalory</h1>
+        <p class="subtitle">Search food & drinks — instantly see calories and nutrition</p>
       </div>
 
       <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('makanan')">Makanan</button>
-        <button class="tab-btn" onclick="switchTab('minuman')">Minuman</button>
+        <button class="tab-btn active" onclick="switchTab('makanan')">Food</button>
+        <button class="tab-btn" onclick="switchTab('minuman')">Drinks</button>
       </div>
 
       <div class="search-container">
-        <input type="text" id="searchInput" class="search-box" placeholder="Ketik nama makanan/minuman..." autofocus onkeyup="searchFood()">
+        <input type="text" id="searchInput" class="search-box" placeholder="Type food or drink name..." autofocus onkeyup="searchFood()">
         <div id="searchResults" class="search-results"></div>
       </div>
 
@@ -88,41 +91,43 @@
           <h3 id="food-name">Nasi Goreng</h3>
           <div class="gizi">
             <div><strong id="calories">450</strong> kcal</div>
-            <div>Karbo: <strong id="carb">65g</strong></div>
-            <div>Prot: <strong id="protein">12g</strong></div>
-            <div>Lemak: <strong id="fat">18g</strong></div>
+            <div>Carbs: <strong id="carb">65g</strong></div>
+            <div>Protein: <strong id="protein">12g</strong></div>
+            <div>Fat: <strong id="fat">18g</strong></div>
           </div>
           <div class="chart-container"><canvas id="giziChart"></canvas></div>
-          <button class="btn-save" onclick="saveHistory()">Simpan ke Riwayat</button>
+          <button class="btn-save" onclick="saveHistory()">Save to History</button>
         </div>
       </div>
     </div>
 
-    <!-- RIWAYAT & ABOUT (tetap sama) -->
+    <!-- HISTORY PAGE -->
     <div id="riwayat-page" class="page">
       <div class="header">
-        <h1>Riwayat</h1>
-        <p class="subtitle">Semua yang kamu cari</p>
+        <h1>History</h1>
+        <p class="subtitle">All items you've searched</p>
       </div>
+      <div id="daily-total" class="daily-total hidden">Today's Total: <span id="today-cal">0</span> kcal</div>
       <div id="history-list"></div>
       <div style="text-align:center; margin-top:20px;">
-        <button class="btn-save" style="background:#ff6b6b;" onclick="clearAllHistory()">Hapus Semua</button>
+        <button class="btn-save" style="background:#ff6b6b;" onclick="clearAllHistory()">Clear All History</button>
       </div>
     </div>
 
+    <!-- ABOUT PAGE -->
     <div id="about-page" class="page">
       <div class="about-content">
-        <h2>RifqyKalori v9.0</h2>
-        <p>Pencarian cepat kalori & gizi makanan/minuman Indonesia.</p>
-        <p>Total: 280+ item (200 makanan + 80 minuman).</p>
+        <h2>RifqyCalory v9.0</h2>
+        <p>Fast calorie & nutrition lookup for Indonesian foods and drinks.</p>
+        <p>Database: 280+ items (200 foods + 80 drinks)</p>
         <p class="copyright">Copyright © 2025 RifqyLCC. All rights reserved.</p>
       </div>
     </div>
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="showPage('scan')">Cari</div>
-    <div class="nav-item" onclick="showPage('riwayat')">Riwayat</div>
+    <div class="nav-item active" onclick="showPage('scan')">Search</div>
+    <div class="nav-item" onclick="showPage('riwayat')">History</div>
     <div class="nav-item" onclick="showPage('about')">About</div>
   </div>
 
@@ -142,7 +147,7 @@
         db.makanan = window.makananDB;
         db.minuman = window.minumanDB;
       } catch (e) {
-        alert('Gagal load database. Pastikan makanan.js & minuman.js ada.');
+        alert('Failed to load database. Check makanan.js & minuman.js files.');
       }
     }
 
@@ -172,16 +177,12 @@
       if (query.length < 2) return;
 
       const data = db[currentTab];
-      const matches = [];
-
-      for (let key in data) {
-        if (key.includes(query) || data[key].name.toLowerCase().includes(query)) {
-          matches.push(data[key]);
-        }
-      }
+      const matches = Object.values(data).filter(item => 
+        item.name.toLowerCase().includes(query) || query.split(' ').some(word => item.name.toLowerCase().includes(word))
+      );
 
       if (matches.length === 0) {
-        resultsDiv.innerHTML = '<div style="padding:20px; text-align:center; opacity:0.7;">Tidak ditemukan</div>';
+        resultsDiv.innerHTML = '<div style="padding:20px; text-align:center; opacity:0.7;">No results found</div>';
         return;
       }
 
@@ -190,7 +191,7 @@
         div.className = 'search-item';
         div.innerHTML = `
           <div class="name">${item.name}</div>
-          <div class="cal">\( {item.cal} kcal • Karbo \){item.carb}g • Protein \( {item.prot}g • Lemak \){item.fat}g</div>
+          <div class="cal">\( {item.cal} kcal • Carbs \){item.carb}g • Protein \( {item.prot}g • Fat \){item.fat}g</div>
         `;
         div.onclick = () => {
           displayResult(item);
@@ -213,43 +214,81 @@
       const ctx = document.getElementById('giziChart').getContext('2d');
       chart = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Karbo', 'Protein', 'Lemak'], datasets: [{ data: [item.carb, item.prot, item.fat], backgroundColor: ['#51cf66', '#ffd43b', '#ff6b6b'] }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        data: { 
+          labels: ['Carbs', 'Protein', 'Fat'], 
+          datasets: [{ 
+            data: [item.carb, item.prot, item.fat], 
+            backgroundColor: ['#51cf66', '#ffd43b', '#ff6b6b'],
+            borderWidth: 0
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } },
+          cutout: '70%'
+        }
       });
     }
 
     function saveHistory() {
       const name = document.getElementById('food-name').textContent;
-      const cal = document.getElementById('calories').textContent;
+      const cal = parseInt(document.getElementById('calories').textContent);
       const history = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       const now = new Date();
-      const time = `\( {now.getDate()}/ \){now.getMonth()+1}/\( {now.getFullYear()}, \){now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-      history.push({ name, cal, time, type: currentTab });
+      const timestamp = now.toISOString();
+      const dateStr = now.toLocaleDateString('en-GB');
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      history.push({ name, cal, timestamp, dateStr, timeStr });
       localStorage.setItem('rifqyHistory', JSON.stringify(history));
-      alert(`${name} disimpan!`);
+      alert(`${name} saved to history!`);
     }
 
     function loadHistory() {
-      const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
+      const history = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       const list = document.getElementById('history-list');
-      list.innerHTML = h.length === 0 ? '<p style="text-align:center; opacity:0.7;">Belum ada riwayat</p>' : '';
-      h.reverse().forEach((item, idx) => {
+      const today = new Date().toLocaleDateString('en-GB');
+      let todayTotal = 0;
+
+      list.innerHTML = '';
+
+      if (history.length === 0) {
+        list.innerHTML = '<p style="text-align:center; opacity:0.7; padding:20px;">No history yet</p>';
+        document.getElementById('daily-total').classList.add('hidden');
+        return;
+      }
+
+      // Hitung total hari ini
+      history.forEach(item => {
+        if (item.dateStr === today) todayTotal += item.cal;
+      });
+
+      if (todayTotal > 0) {
+        document.getElementById('today-cal').textContent = todayTotal;
+        document.getElementById('daily-total').classList.remove('hidden');
+      } else {
+        document.getElementById('daily-total').classList.add('hidden');
+      }
+
+      // Tampilkan riwayat terbaru di atas
+      history.slice().reverse().forEach((item, idx) => {
+        const revIdx = history.length - 1 - idx;
         const div = document.createElement('div');
         div.className = 'history-item';
         div.innerHTML = `
           <div class="info">
-            <div class="time">${item.time}</div>
+            <div class="time">\( {item.dateStr} • \){item.timeStr}</div>
             <div class="name">${item.name}</div>
             <div class="cal">${item.cal} kcal</div>
           </div>
-          <button class="btn-delete" onclick="deleteHistory(${h.length-1-idx})">Hapus</button>
+          <button class="btn-delete" onclick="deleteHistory(${revIdx})">Delete</button>
         `;
         list.appendChild(div);
       });
     }
 
     function deleteHistory(idx) {
-      if (!confirm('Hapus item ini?')) return;
+      if (!confirm('Delete this item?')) return;
       const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       h.splice(idx, 1);
       localStorage.setItem('rifqyHistory', JSON.stringify(h));
@@ -257,7 +296,7 @@
     }
 
     function clearAllHistory() {
-      if (!confirm('Hapus SEMUA riwayat?')) return;
+      if (!confirm('Delete all history?')) return;
       localStorage.removeItem('rifqyHistory');
       loadHistory();
     }
