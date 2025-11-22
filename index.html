@@ -22,7 +22,6 @@
       padding: 20px 16px 100px;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
     }
     .container {
       width: 100%;
@@ -30,7 +29,6 @@
       margin: 0 auto;
     }
 
-    /* HEADER */
     .header {
       text-align: center;
       margin-bottom: 24px;
@@ -48,7 +46,6 @@
       margin-top: 8px;
     }
 
-    /* TABS */
     .tab-nav {
       display: flex;
       gap: 12px;
@@ -63,14 +60,12 @@
       border: none;
       font-weight: 600;
       font-size: 1.05rem;
-      transition: 0.3s;
     }
     .tab-btn.active {
       background: var(--primary);
       color: white;
     }
 
-    /* SEARCH */
     .search-box {
       width: 100%;
       padding: 18px 20px;
@@ -85,6 +80,7 @@
     .search-box::placeholder {
       color: rgba(255,255,255,0.6);
     }
+
     .search-results {
       margin-top: 16px;
       max-height: 340px;
@@ -99,10 +95,7 @@
       border-radius: 20px;
       margin: 10px 0;
       cursor: pointer;
-      transition: 0.2s;
-    }
-    .search-item:hover {
-      background: rgba(255,255,255,0.18);
+      text-align: center;
     }
     .search-item .name {
       font-weight: 600;
@@ -114,7 +107,6 @@
       font-size: 0.95rem;
     }
 
-    /* RESULT CARD */
     .result-card {
       background: var(--glass);
       backdrop-filter: blur(20px);
@@ -127,25 +119,21 @@
     }
     .result-card h3 {
       font-size: 1.9rem;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       font-weight: 700;
     }
     .gizi {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
       margin: 20px 0;
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 500;
     }
-    .gizi > div {
-      flex: 1;
-      min-width: 100px;
-    }
     .chart-container {
-      height: 220px;
-      margin: 24px 0;
+      height: 240px;
+      margin: 28px auto;
+      max-width: 240px;
     }
     .btn-save {
       width: 100%;
@@ -159,7 +147,6 @@
       cursor: pointer;
     }
 
-    /* HISTORY */
     .daily-total {
       background: rgba(255,212,59,0.2);
       color: var(--yellow);
@@ -180,7 +167,7 @@
       align-items: center;
     }
     .history-item .info .time {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       opacity: 0.8;
       margin-bottom: 6px;
     }
@@ -214,7 +201,6 @@
       font-size: 1.05rem;
     }
 
-    /* BOTTOM NAV */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -234,23 +220,10 @@
       border-radius: 50px;
       font-weight: 600;
       font-size: 0.95rem;
-      transition: 0.3s;
     }
     .nav-item.active {
       background: var(--primary);
       color: white;
-    }
-
-    .lang-toggle {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: var(--glass);
-      padding: 8px 16px;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      z-index: 9999;
-      backdrop-filter: blur(10px);
     }
 
     .hidden { display: none !important; }
@@ -259,8 +232,6 @@
   </style>
 </head>
 <body>
-
-  <div class="lang-toggle" onclick="toggleLang()">ID | EN</div>
 
   <div class="container">
 
@@ -314,7 +285,7 @@
       <div class="header">
         <h1>Tentang</h1>
         <p class="subtitle">RifqyCalory v10 • 280+ item makanan & minuman Indonesia</p>
-        <p style="text-align:center; margin-top:40px; opacity:0.7; font-size:0.9rem;">
+        <p style="text-align:center; margin-top:50px; opacity:0.7; font-size:0.9rem;">
           © 2025 RifqyLCC • All rights reserved
         </p>
       </div>
@@ -328,9 +299,17 @@
   </div>
 
   <script>
-    let lang = (navigator.language || navigator.userLanguage).startsWith('id') ? 'id' : 'en';
+    const isID = (navigator.language || navigator.userLanguage || 'en').startsWith('id');
     let currentTab = 'makanan';
     let db = {}, chart;
+
+    // Format tanggal Indonesia yang cantik
+    function formatDateTime(date) {
+      const options = { day: 'numeric', month: 'short', year: 'numeric' };
+      const d = date.toLocaleDateString('id-ID', options); // 22 Nov 2025
+      const t = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      return `\( {d} • \){t}`;
+    }
 
     async function loadData() {
       try {
@@ -361,14 +340,6 @@
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.querySelector(`.nav-item[onclick="showPage('${p}')"]`).classList.add('active');
       if (p === 'history') loadHistory();
-    }
-
-    function toggleLang() {
-      lang = lang === 'id' ? 'en' : 'id';
-      document.querySelectorAll('[data-id],[data-en]').forEach(el => {
-        el.textContent = el.dataset[lang] || el.dataset.en;
-      });
-      loadHistory();
     }
 
     function searchFood() {
@@ -412,7 +383,7 @@
           labels: ['Karbo', 'Protein', 'Lemak'],
           datasets: [{ data: [item.carb, item.prot, item.fat], backgroundColor: ['#51cf66','#ffd43b','#ff6b6b'], borderWidth: 0 }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' }}, cutout: '70%' }
+        options: { responsive: true, plugins: { legend: { position: 'bottom' }}, cutout: '68%' }
       });
     }
 
@@ -421,23 +392,24 @@
       const cal = parseInt(document.getElementById('calories').textContent);
       const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       const now = new Date();
-      const date = now.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
-      const time = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+      const datetime = formatDateTime(now);
 
-      h.push({ name, cal, date, time });
+      h.push({ name, cal, datetime });
       localStorage.setItem('rifqyHistory', JSON.stringify(h));
-      alert(`${name} disimpan!`);
+      alert('Disimpan ke riwayat!');
     }
 
     function loadHistory() {
       const h = JSON.parse(localStorage.getItem('rifqyHistory') || '[]');
       const list = document.getElementById('history-list');
-      const today = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+      const todayStr = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
       let todayCal = 0;
 
       list.innerHTML = h.length === 0 ? '<p style="text-align:center;opacity:0.7;padding:40px">Belum ada riwayat</p>' : '';
 
-      h.forEach(item => { if (item.date === today) todayCal += item.cal; });
+      h.forEach(item => {
+        if (item.datetime.includes(todayStr)) todayCal += item.cal;
+      });
 
       document.getElementById('today-cal').textContent = todayCal;
       document.getElementById('daily-total').classList.toggle('hidden', todayCal === 0);
@@ -448,7 +420,7 @@
         div.className = 'history-item';
         div.innerHTML = `
           <div class="info">
-            <div class="time">\( {item.date} • \){item.time}</div>
+            <div class="time">${item.datetime}</div>
             <div class="name">${item.name}</div>
             <div class="cal">${item.cal} kcal</div>
           </div>
